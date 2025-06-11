@@ -1,0 +1,14 @@
+.image-container {
+  overflow-x: auto;
+  white-space: nowrap;
+  padding: 10px 0;
+}
+
+.image-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.image-container::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}

@@ -11,3 +11,19 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+
+/* Убираем горизонтальный скролл */
+body {
+  overflow-x: hidden;
+}
+
+/* Анимация для баннеров */
+.ad-banner {
+  transition: all 0.3s ease;
+}
+
+.ad-banner:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}

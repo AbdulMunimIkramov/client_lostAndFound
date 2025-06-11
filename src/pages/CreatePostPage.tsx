@@ -99,9 +99,11 @@ const CreatePostPage = () => {
 
         <Form.Item label="Тип" name="type" rules={[{ required: true }]}>
           <Select placeholder="Выберите тип">
-            <Select.Option value="document">Документ</Select.Option>
+            <Select.Option value="all">Все типы</Select.Option>
+            <Select.Option value="phone">Телефон</Select.Option>
             <Select.Option value="keys">Ключи</Select.Option>
-            <Select.Option value="clothes">Одежда</Select.Option>
+            <Select.Option value="document">Документ</Select.Option>
+            <Select.Option value="wallet">Кошелек</Select.Option>
             <Select.Option value="other">Другое</Select.Option>
           </Select>
         </Form.Item>
@@ -162,3 +164,4 @@ const CreatePostPage = () => {
 };
 
 export default CreatePostPage;
+

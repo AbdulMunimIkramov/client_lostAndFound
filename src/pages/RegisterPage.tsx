@@ -1,5 +1,5 @@
 import { Button, Form, Input, Typography, message } from "antd";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // Добавляем Link
 import axios from "axios";
 
 const { Title } = Typography;
@@ -43,6 +43,14 @@ const RegisterPage = () => {
           <Button type="primary" htmlType="submit" block>
             Зарегистрироваться
           </Button>
+        </Form.Item>
+        <Form.Item>
+          <p>
+            Уже есть аккаунт?{" "}
+            <Link to="/login">
+              <Button type="link">Войти</Button>
+            </Link>
+          </p>
         </Form.Item>
       </Form>
     </div>

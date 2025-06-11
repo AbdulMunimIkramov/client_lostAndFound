@@ -1,8 +1,11 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Card, Spin, Image, Typography } from "antd";
+import { Card, Spin, Typography, Button } from "antd";
 import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
+import ImageGallery from "../components/ImageGallery";
+import { getCurrentUser } from "../utils/auth";
+import { useNavigate } from "react-router-dom";
 
 const { Title, Paragraph } = Typography;
 
@@ -10,17 +13,19 @@ const PublicationDetailsPage = () => {
   const { id } = useParams();
   const [publication, setPublication] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const currentUser = getCurrentUser();
 
   useEffect(() => {
     const fetchPublication = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:8000/api/publications/${id}`
+          `http://localhost:8000/api/publications/${id}`,
+          { withCredentials: true }
         );
 
         const pub = res.data.publication;
 
-        // Парсим location из JSON-строки, если оно есть и строка
         if (pub.location && typeof pub.location === "string") {
           try {
             pub.location = JSON.parse(pub.location);
@@ -28,6 +33,7 @@ const PublicationDetailsPage = () => {
             pub.location = null;
           }
         }
+
         setPublication(pub);
       } catch (err) {
         console.error("Ошибка при загрузке публикации:", err);
@@ -39,13 +45,17 @@ const PublicationDetailsPage = () => {
     fetchPublication();
   }, [id]);
 
+  const handleChatClick = () => {
+    if (currentUser && publication.user_id !== currentUser.id) {
+      navigate('/chat', { state: { publication } });
+    }
+  };
+
   if (loading)
     return (
       <Spin size="large" style={{ display: "block", margin: "100px auto" }} />
     );
   if (!publication) return <p>Публикация не найдена</p>;
-
-  console.log(publication);
 
   return (
     <Card style={{ maxWidth: 800, margin: "auto", marginTop: 30 }}>
@@ -62,36 +72,8 @@ const PublicationDetailsPage = () => {
       <p>
         <strong>Телефон:</strong> {publication.phone}
       </p>
-
-      {publication.images?.length > 0 ? (
-        <div style={{ marginTop: 20 }}>
-          <img
-            alt={publication.title}
-            src={publication.images[0]}
-            style={{
-              width: "100%",
-              maxHeight: 300,
-              objectFit: "cover",
-              objectPosition: "center",
-              borderRadius: 8,
-            }}
-          />
-        </div>
-      ) : (
-        <div
-          style={{
-            height: 200,
-            marginTop: 20,
-            background: "#f0f0f0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: 8,
-          }}
-        >
-          <span>Нет изображения</span>
-        </div>
-      )}
+      
+      <ImageGallery images={publication.images} />
 
       {publication.location && (
         <div style={{ marginTop: 20 }}>
@@ -117,6 +99,11 @@ const PublicationDetailsPage = () => {
             </Map>
           </YMaps>
         </div>
+      )}
+      {currentUser && publication.user_id !== currentUser.id && (
+        <Button type="primary" onClick={handleChatClick} style={{ marginTop: 20 }}>
+          Написать автору
+        </Button>
       )}
     </Card>
   );

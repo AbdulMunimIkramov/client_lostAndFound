@@ -3,7 +3,7 @@ import axios from "axios";
 import { Card, Spin, Typography, Row, Col, message } from "antd";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
-
+import { Button } from "antd";
 const { Title } = Typography;
 
 const Home = () => {
@@ -11,6 +11,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
 
   const navigate = useNavigate();
 
@@ -20,13 +21,16 @@ const Home = () => {
       const params: any = {};
       if (search) params.search = search;
       if (categoryFilter !== "all") params.category = categoryFilter;
+      if (typeFilter !== "all") params.type = typeFilter;
 
       const res = await axios.get("http://localhost:8000/api/publications", {
+         withCredentials: true,
         params,
       });
-      setPublications(res.data.publications);
+      setPublications(res.data.publications || []);
     } catch (err) {
       message.error("Ошибка при загрузке публикаций");
+      console.error("Fetch error:", err);
     } finally {
       setLoading(false);
     }
@@ -34,7 +38,7 @@ const Home = () => {
 
   useEffect(() => {
     fetchPublications();
-  }, [search, categoryFilter]);
+  }, [search, categoryFilter, typeFilter]);
 
   if (loading) {
     return (
@@ -42,20 +46,21 @@ const Home = () => {
     );
   }
 
-  console.log(publications)
-
   return (
     <div style={{ maxWidth: 900, margin: "auto", padding: "20px" }}>
       <Header
         onSearch={(value: string) => setSearch(value)}
         onCategoryChange={(value: string) => setCategoryFilter(value)}
+        onTypeChange={(value: string) => setTypeFilter(value)}
         searchValue={search}
         categoryValue={categoryFilter}
+        typeValue={typeFilter}
       />
 
       <Title level={2}>Публикации</Title>
 
       <Row gutter={[16, 16]}>
+        {" "}
         {publications.length === 0 ? (
           <Col span={24}>
             <Card>
@@ -120,3 +125,4 @@ const Home = () => {
 };
 
 export default Home;
+

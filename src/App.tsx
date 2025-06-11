@@ -6,6 +6,7 @@ import PrivateRoute from "./components/PrivateRoute";
 import ProfilePage from "./pages/ProfilePage";
 import CreatePostPage from "./pages/CreatePostPage";
 import PublicationDetailsPage from "./pages/PublicationDetailsPage";
+import ChatComponent from "./components/ChatComponent";
 
 const App = () => {
   return (
@@ -15,7 +16,6 @@ const App = () => {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/" element={<Home />} />
         <Route path="/publications/:id" element={<PublicationDetailsPage />} />
-        {/* Защищённый маршрут */}
         <Route
           path="/profile"
           element={
@@ -24,12 +24,19 @@ const App = () => {
             </PrivateRoute>
           }
         />
-        import CreatePostPage from './pages/CreatePostPage';
         <Route
           path="/create"
           element={
             <PrivateRoute>
               <CreatePostPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            <PrivateRoute>
+              <ChatComponent />
             </PrivateRoute>
           }
         />
