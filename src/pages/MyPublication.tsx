@@ -1,9 +1,9 @@
 import { Card, Col, Row, Button, message, Popconfirm, Spin, Typography } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
-import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import instance from "../api/axios";
+import { getCurrentUser } from "../utils/auth";
 
 const { Title, Paragraph } = Typography;
 
@@ -11,14 +11,39 @@ export const MyPublications = () => {
   const [publications, setPublications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const currentUser = getCurrentUser();
 
   const fetchPublications = async () => {
     setLoading(true);
     try {
-      const res = await instance.get("/api/user/me/publications", {
+      if (!currentUser?.id) {
+        throw new Error("Пользователь не авторизован");
+      }
+
+      // Получаем список ID публикаций пользователя
+      const userPubsRes = await instance.get("/api/user/me/publications", {
         withCredentials: true,
       });
-      setPublications(res.data.publications || []);
+      const publicationIds = userPubsRes.data.publications.map((pub: any) => pub.id);
+
+      // Запрашиваем каждую публикацию по ID
+      const publicationsPromises = publicationIds.map(async (id: number) => {
+        const res = await instance.get(`/api/publications/${id}`, {
+          withCredentials: true,
+        });
+        const pub = res.data.publication;
+        if (pub.location && typeof pub.location === "string") {
+          try {
+            pub.location = JSON.parse(pub.location);
+          } catch {
+            pub.location = null;
+          }
+        }
+        return pub;
+      });
+
+      const publications = await Promise.all(publicationsPromises);
+      setPublications(publications);
     } catch (err) {
       message.error("Ошибка при загрузке публикаций");
       console.error("Fetch error:", err);
@@ -29,7 +54,7 @@ export const MyPublications = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`http://localhost:8000/api/publications/${id}`, {
+      await instance.delete(`/api/publications/${id}`, {
         withCredentials: true,
       });
       message.success("Публикация удалена");
@@ -86,7 +111,13 @@ export const MyPublications = () => {
                 )
               }
               actions={[
-                <EditOutlined key="edit" onClick={() => navigate(`/edit/${pub.id}`)} />,
+                <EditOutlined
+                  key="edit"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Предотвращаем всплытие события
+                    navigate(`/publication/${pub.id}/edit`);
+                  }}
+                />,
                 <Popconfirm
                   title="Удалить публикацию?"
                   description="Вы уверены, что хотите удалить эту публикацию?"
@@ -94,7 +125,10 @@ export const MyPublications = () => {
                   okText="Да"
                   cancelText="Нет"
                 >
-                  <DeleteOutlined key="delete" />
+                  <DeleteOutlined
+                    key="delete"
+                    onClick={(e) => e.stopPropagation()} // Предотвращаем всплытие события
+                  />
                 </Popconfirm>,
               ]}
               onClick={() => navigate(`/publications/${pub.id}`)}
@@ -109,6 +143,9 @@ export const MyPublications = () => {
               />
               <Paragraph style={{ marginTop: 8, fontWeight: 500 }}>
                 {pub.category === "lost" ? "Утеряно" : "Найдено"} — {pub.type}
+              </Paragraph>
+              <Paragraph style={{ marginTop: 4, color: pub.is_resolved ? 'red' : 'green' }}>
+                Статус: {pub.is_resolved ? "Завершена" : "Активна"}
               </Paragraph>
             </Card>
           </Col>

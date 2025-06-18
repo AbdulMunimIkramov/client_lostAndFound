@@ -1,5 +1,3 @@
-// ✅ Расширенный AdminPage.tsx с поддержкой жалоб, фильтрацией и статусом публикаций
-
 import { useEffect, useState } from 'react';
 import { Card, Table, Button, Tabs, message, Typography, Popconfirm } from 'antd';
 import axios from 'axios';
@@ -18,7 +16,6 @@ const AdminPage = () => {
   const [reports, setReports] = useState<any[]>([]);
 
   useEffect(() => {
-    console.log(user)
     if (!user?.is_admin) {
       message.error('Доступ только для администратора');
       navigate('/');
@@ -55,8 +52,20 @@ const AdminPage = () => {
       await instance.post(`/api/admin/users/${id}/block`);
       message.success('Пользователь заблокирован');
       fetchUsers();
+      fetchReports();
     } catch {
       message.error('Ошибка при блокировке');
+    }
+  };
+
+  const unblockUser = async (id: number) => {
+    try {
+      await instance.post(`/api/admin/users/${id}/unblock`);
+      message.success('Пользователь разблокирован');
+      fetchUsers();
+      fetchReports();
+    } catch {
+      message.error('Ошибка при разблокировке');
     }
   };
 
@@ -65,10 +74,142 @@ const AdminPage = () => {
       await instance.delete(`/api/admin/publications/${id}`);
       message.success('Публикация удалена');
       fetchPublications();
+      fetchReports();
     } catch {
       message.error('Ошибка при удалении публикации');
     }
   };
+
+  const tabItems = [
+    {
+      key: '1',
+      label: 'Пользователи',
+      children: (
+        <Table
+          dataSource={users}
+          rowKey="id"
+          columns={[
+            { title: 'ID', dataIndex: 'id', sorter: (a, b) => a.id - b.id },
+            { title: 'Имя', dataIndex: 'name', sorter: (a, b) => a.name.localeCompare(b.name) },
+            { title: 'Email', dataIndex: 'email', sorter: (a, b) => a.email.localeCompare(b.email) },
+            {
+              title: 'Жалобы',
+              dataIndex: 'report_count',
+              sorter: (a, b) => b.report_count - a.report_count, // Сортировка по убыванию
+            },
+            {
+              title: 'Статус',
+              dataIndex: 'is_blocked',
+              filters: [
+                { text: 'Активен', value: false },
+                { text: 'Заблокирован', value: true },
+              ],
+              onFilter: (value, record) => record.is_blocked === value,
+              render: (val) => (val ? 'Заблокирован' : 'Активен'),
+            },
+            {
+              title: 'Действия',
+              render: (record) => (
+                <Popconfirm
+                  title={record.is_blocked ? 'Разблокировать пользователя?' : 'Заблокировать пользователя?'}
+                  onConfirm={() => (record.is_blocked ? unblockUser(record.id) : blockUser(record.id))}
+                >
+                  <Button danger={record.is_blocked} type={record.is_blocked ? 'default' : 'primary'}>
+                    {record.is_blocked ? 'Разблокировать' : 'Блокировать'}
+                  </Button>
+                </Popconfirm>
+              ),
+            },
+          ]}
+        />
+      ),
+    },
+    {
+      key: '2',
+      label: 'Публикации',
+      children: (
+        <Table
+          dataSource={publications}
+          rowKey="id"
+          columns={[
+            { title: 'ID', dataIndex: 'id', sorter: (a, b) => a.id - b.id },
+            { title: 'Название', dataIndex: 'title', sorter: (a, b) => a.title.localeCompare(b.title) },
+            { title: 'Категория', dataIndex: 'category', sorter: (a, b) => a.category.localeCompare(b.category) },
+            { title: 'Тип', dataIndex: 'type', sorter: (a, b) => a.type.localeCompare(b.type) },
+            {
+              title: 'Жалобы',
+              dataIndex: 'report_count',
+              sorter: (a, b) => b.report_count - a.report_count, // Сортировка по убыванию
+            },
+            {
+              title: 'Завершено',
+              dataIndex: 'is_resolved',
+              render: (val) => (val ? '✅' : '—'),
+            },
+            {
+              title: 'Действия',
+              render: (record) => (
+                <Popconfirm
+                  title="Удалить публикацию?"
+                  onConfirm={() => deletePublication(record.id)}
+                >
+                  <Button danger>Удалить</Button>
+                </Popconfirm>
+              ),
+            },
+          ]}
+        />
+      ),
+    },
+    {
+      key: '3',
+      label: 'Жалобы',
+      children: (
+        <Table
+          dataSource={reports}
+          rowKey="id"
+          columns={[
+            { title: 'ID', dataIndex: 'id', sorter: (a, b) => a.id - b.id },
+            { title: 'Жалобщик', dataIndex: 'reporter_name', sorter: (a, b) => a.reporter_name.localeCompare(b.reporter_name) },
+            { title: 'На пользователя', dataIndex: 'reported_user_name' },
+            { title: 'Публикация', dataIndex: 'publication_title' },
+            { title: 'Сообщение', dataIndex: 'message' },
+            {
+              title: 'Действия',
+              render: (record) => (
+                <>
+                  {record.reported_user_id && (
+                    <Popconfirm
+                      title={record.reported_user_blocked ? 'Разблокировать пользователя?' : 'Заблокировать пользователя?'}
+                      onConfirm={() => (record.reported_user_blocked ? unblockUser(record.reported_user_id) : blockUser(record.reported_user_id))}
+                    >
+                      <Button
+                        size="small"
+                        danger={!record.reported_user_blocked}
+                        style={{ marginRight: 8 }}
+                      >
+                        {record.reported_user_blocked ? 'Разблокировать' : 'Блокировать'}
+                      </Button>
+                    </Popconfirm>
+                  )}
+                  {record.publication_id && (
+                    <Popconfirm
+                      title="Удалить публикацию?"
+                      onConfirm={() => deletePublication(record.publication_id)}
+                    >
+                      <Button size="small" danger>
+                        Удалить
+                      </Button>
+                    </Popconfirm>
+                  )}
+                </>
+              ),
+            },
+          ]}
+        />
+      ),
+    },
+  ];
 
   return (
     <Card style={{ maxWidth: 1000, margin: '20px auto' }}>
@@ -83,113 +224,7 @@ const AdminPage = () => {
       <p>📄 Публикаций: {stats.publications_count}</p>
       <p>🚩 Жалоб: {stats.reports_count}</p>
 
-      <Tabs defaultActiveKey="1">
-        <Tabs.TabPane tab="Пользователи" key="1">
-          <Table
-            dataSource={users}
-            rowKey="id"
-            columns={[
-              { title: 'ID', dataIndex: 'id' },
-              { title: 'Имя', dataIndex: 'name' },
-              { title: 'Email', dataIndex: 'email' },
-              {
-                title: 'Статус',
-                dataIndex: 'is_blocked',
-                filters: [
-                  { text: 'Активен', value: false },
-                  { text: 'Заблокирован', value: true },
-                ],
-                onFilter: (value, record) => record.is_blocked === value,
-                render: (val) => (val ? 'Заблокирован' : 'Активен'),
-              },
-              {
-                title: 'Действия',
-                render: (record) =>
-                  record.is_blocked ? (
-                    'Заблокирован'
-                  ) : (
-                    <Popconfirm
-                      title="Заблокировать пользователя?"
-                      onConfirm={() => blockUser(record.id)}
-                    >
-                      <Button danger>Блокировать</Button>
-                    </Popconfirm>
-                  ),
-              },
-            ]}
-          />
-        </Tabs.TabPane>
-
-        <Tabs.TabPane tab="Публикации" key="2">
-          <Table
-            dataSource={publications}
-            rowKey="id"
-            columns={[
-              { title: 'ID', dataIndex: 'id' },
-              { title: 'Название', dataIndex: 'title' },
-              { title: 'Категория', dataIndex: 'category' },
-              { title: 'Тип', dataIndex: 'type' },
-              {
-                title: 'Завершено',
-                dataIndex: 'is_resolved',
-                render: (val) => (val ? '✅' : '—'),
-              },
-              {
-                title: 'Действия',
-                render: (record) => (
-                  <Popconfirm
-                    title="Удалить публикацию?"
-                    onConfirm={() => deletePublication(record.id)}
-                  >
-                    <Button danger>Удалить</Button>
-                  </Popconfirm>
-                ),
-              },
-            ]}
-          />
-        </Tabs.TabPane>
-
-        <Tabs.TabPane tab="Жалобы" key="3">
-          <Table
-            dataSource={reports}
-            rowKey="id"
-            columns={[
-              { title: 'ID', dataIndex: 'id' },
-              { title: 'Жалобщик', dataIndex: 'reporter_name' },
-              { title: 'На пользователя', dataIndex: 'reported_user_name' },
-              { title: 'Публикация', dataIndex: 'publication_title' },
-              { title: 'Сообщение', dataIndex: 'message' },
-              {
-                title: 'Действия',
-                render: (record) => (
-                  <>
-                    {record.reported_user_id && (
-                      <Popconfirm
-                        title="Заблокировать пользователя?"
-                        onConfirm={() => blockUser(record.reported_user_id)}
-                      >
-                        <Button size="small" danger style={{ marginRight: 8 }}>
-                          Блокировать
-                        </Button>
-                      </Popconfirm>
-                    )}
-                    {record.publication_id && (
-                      <Popconfirm
-                        title="Удалить публикацию?"
-                        onConfirm={() => deletePublication(record.publication_id)}
-                      >
-                        <Button size="small" danger>
-                          Удалить
-                        </Button>
-                      </Popconfirm>
-                    )}
-                  </>
-                ),
-              },
-            ]}
-          />
-        </Tabs.TabPane>
-      </Tabs>
+      <Tabs defaultActiveKey="1" items={tabItems} />
     </Card>
   );
 };

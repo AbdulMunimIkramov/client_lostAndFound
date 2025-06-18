@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Input, Select, Button, Tooltip } from "antd";
 import { useNavigate } from "react-router-dom";
 import { UserOutlined, MessageOutlined } from "@ant-design/icons";
+import { getCurrentUser } from "../utils/auth";
 const logo = require("../img/logo.png");
 
 const { Search } = Input;
@@ -27,6 +28,7 @@ const Header = ({
   const navigate = useNavigate();
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const isLongPress = useRef(false);
+  const user = getCurrentUser(); // получаем пользователя
 
   useEffect(() => {
     setLocalSearch(searchValue);
@@ -128,25 +130,40 @@ const Header = ({
         <Select.Option value="wallet">Кошелек</Select.Option>
         <Select.Option value="other">Другое</Select.Option>
       </Select>
-      <Button type="default" size="large" onClick={handleCreateClick}>
-        Создать публикацию
-      </Button>
-      <Tooltip title="Мой профиль">
-        <Button
-          type="primary"
-          size="large"
-          icon={<UserOutlined />}
-          onClick={handleProfileClick}
-        />
-      </Tooltip>
-      <Tooltip title="Мои чаты">
-        <Button
-          type="primary"
-          size="large"
-          icon={<MessageOutlined />}
-          onClick={handleChatClick}
-        />
-      </Tooltip>
+      {user ? (
+        <>
+          <Button type="default" size="large" onClick={handleCreateClick}>
+            Создать публикацию
+          </Button>
+          <Button
+            type="default"
+            size="large"
+            onClick={() => navigate("/mypublication")}
+          >
+            Мои публикации
+          </Button>
+          <Tooltip title="Мой профиль">
+            <Button
+              type="primary"
+              size="large"
+              icon={<UserOutlined />}
+              onClick={handleProfileClick}
+            />
+          </Tooltip>
+          <Tooltip title="Мои чаты">
+            <Button
+              type="primary"
+              size="large"
+              icon={<MessageOutlined />}
+              onClick={handleChatClick}
+            />
+          </Tooltip>
+        </>
+      ) : (
+        <Button type="primary" size="large" onClick={() => navigate("/login")}>
+          Войти
+        </Button>
+      )}
     </div>
   );
 };

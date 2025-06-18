@@ -261,7 +261,7 @@ const ChatComponent: React.FC = () => {
                     }}
                   >
                     <Text strong>
-                      {msg.sender_id === userId ? "Вы" : "Собеседник"}:
+                      {msg.sender_id === userId ? "Вы" : "Автор"}:
                     </Text>{" "}
                     {msg.content}
                     <br />
