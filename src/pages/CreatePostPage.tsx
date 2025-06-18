@@ -143,7 +143,7 @@ const CreatePostPage = () => {
         <Form.Item label="Местоположение" required>
           <YMaps query={{ apikey: "f14e388e-783a-4586-98ea-ee66b124d032" }}>
             <Map
-              defaultState={{ center: [55.751574, 37.573856], zoom: 10 }}
+              defaultState={{ center: [42.875926, 74.601310], zoom: 12 }}
               width="100%"
               height="300px"
               onClick={handleMapClick}

@@ -7,6 +7,11 @@ import ProfilePage from "./pages/ProfilePage";
 import CreatePostPage from "./pages/CreatePostPage";
 import PublicationDetailsPage from "./pages/PublicationDetailsPage";
 import ChatComponent from "./components/ChatComponent";
+import AdminPage from "./pages/AdminPage";
+import MyPublications from "./pages/MyPublication";
+import AdminAdsPage from "./pages/AdminAdsPage";
+import EditPublicationPage from "./components/EditPublicationPage";
+// import AdManagementPage from "./pages/AdManagementPage";
 
 const App = () => {
   return (
@@ -16,6 +21,7 @@ const App = () => {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/" element={<Home />} />
         <Route path="/publications/:id" element={<PublicationDetailsPage />} />
+        <Route path="/mypublication" element={<MyPublications />} />
         <Route
           path="/profile"
           element={
@@ -37,6 +43,30 @@ const App = () => {
           element={
             <PrivateRoute>
               <ChatComponent />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <PrivateRoute>
+              <AdminPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/advertisements"
+          element={
+            <PrivateRoute>
+              <AdminAdsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/publication/:id/edit"
+          element={
+            <PrivateRoute>
+              <EditPublicationPage />
             </PrivateRoute>
           }
         />

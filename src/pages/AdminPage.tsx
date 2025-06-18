@@ -5,6 +5,7 @@ import { Card, Table, Button, Tabs, message, Typography, Popconfirm } from 'antd
 import axios from 'axios';
 import { getCurrentUser } from '../utils/auth';
 import { useNavigate } from 'react-router-dom';
+import instance from '../api/axios';
 
 const { Title } = Typography;
 
@@ -17,6 +18,7 @@ const AdminPage = () => {
   const [reports, setReports] = useState<any[]>([]);
 
   useEffect(() => {
+    console.log(user)
     if (!user?.is_admin) {
       message.error('Доступ только для администратора');
       navigate('/');
@@ -29,28 +31,28 @@ const AdminPage = () => {
   }, []);
 
   const fetchStats = async () => {
-    const res = await axios.get('/api/admin/stats');
+    const res = await instance.get('/api/admin/stats');
     setStats(res.data);
   };
 
   const fetchUsers = async () => {
-    const res = await axios.get('/api/admin/users');
+    const res = await instance.get('/api/admin/users');
     setUsers(res.data);
   };
 
   const fetchPublications = async () => {
-    const res = await axios.get('/api/admin/publications');
+    const res = await instance.get('/api/admin/publications');
     setPublications(res.data);
   };
 
   const fetchReports = async () => {
-    const res = await axios.get('/api/admin/reports');
+    const res = await instance.get('/api/admin/reports');
     setReports(res.data);
   };
 
   const blockUser = async (id: number) => {
     try {
-      await axios.post(`/api/admin/users/${id}/block`);
+      await instance.post(`/api/admin/users/${id}/block`);
       message.success('Пользователь заблокирован');
       fetchUsers();
     } catch {
@@ -60,7 +62,7 @@ const AdminPage = () => {
 
   const deletePublication = async (id: number) => {
     try {
-      await axios.delete(`/api/admin/publications/${id}`);
+      await instance.delete(`/api/admin/publications/${id}`);
       message.success('Публикация удалена');
       fetchPublications();
     } catch {
@@ -70,7 +72,12 @@ const AdminPage = () => {
 
   return (
     <Card style={{ maxWidth: 1000, margin: '20px auto' }}>
-      <Title level={2}>Админ панель</Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Title level={2}>Админ панель</Title>
+        <Button type="primary" onClick={() => navigate('/admin/advertisements')}>
+          Добавить рекламу
+        </Button>
+      </div>
 
       <p>👤 Пользователей: {stats.users_count}</p>
       <p>📄 Публикаций: {stats.publications_count}</p>
@@ -83,7 +90,7 @@ const AdminPage = () => {
             rowKey="id"
             columns={[
               { title: 'ID', dataIndex: 'id' },
-              { title: 'Имя', dataIndex: 'full_name' },
+              { title: 'Имя', dataIndex: 'name' },
               { title: 'Email', dataIndex: 'email' },
               {
                 title: 'Статус',

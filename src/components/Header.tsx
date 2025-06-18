@@ -1,7 +1,8 @@
-// src/components/Header.tsx
-import { useState, useEffect } from "react";
-import { Input, Select, Button } from "antd";
+import { useState, useEffect, useRef } from "react";
+import { Input, Select, Button, Tooltip } from "antd";
 import { useNavigate } from "react-router-dom";
+import { UserOutlined, MessageOutlined } from "@ant-design/icons";
+const logo = require("../img/logo.png");
 
 const { Search } = Input;
 
@@ -24,6 +25,8 @@ const Header = ({
 }: HeaderProps) => {
   const [localSearch, setLocalSearch] = useState(searchValue);
   const navigate = useNavigate();
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const isLongPress = useRef(false);
 
   useEffect(() => {
     setLocalSearch(searchValue);
@@ -41,16 +44,57 @@ const Header = ({
     navigate("/chat");
   };
 
+  const handleLogoClick = () => {
+    if (!isLongPress.current) {
+      navigate("/");
+    }
+  };
+
+  const handleLongPressStart = () => {
+    isLongPress.current = false;
+    longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
+      navigate("/admin");
+    }, 1000); // Долгое нажатие — 1 секунда
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
   return (
     <div
       style={{
-        marginBottom: 20,
+        marginBottom: 5,
         display: "flex",
         gap: 16,
         alignItems: "center",
         flexWrap: "wrap",
       }}
     >
+      <img
+        src={logo}
+        alt="Logo"
+        style={{
+          width: 200,
+          height: 100,
+          objectFit: "cover",
+          cursor: "pointer",
+          margin: 0,
+          padding: 0,
+          border: "none",
+        }}
+        onClick={handleLogoClick}
+        onMouseDown={handleLongPressStart}
+        onMouseUp={handleLongPressEnd}
+        onMouseLeave={handleLongPressEnd}
+        onTouchStart={handleLongPressStart}
+        onTouchEnd={handleLongPressEnd}
+        onTouchCancel={handleLongPressEnd}
+      />
       <Search
         placeholder="Поиск по названию или описанию"
         value={localSearch}
@@ -87,12 +131,22 @@ const Header = ({
       <Button type="default" size="large" onClick={handleCreateClick}>
         Создать публикацию
       </Button>
-      <Button type="primary" size="large" onClick={handleProfileClick}>
-        Мой профиль
-      </Button>
-      <Button type="primary" size="large" onClick={handleChatClick}>
-        Мои чаты
-      </Button>
+      <Tooltip title="Мой профиль">
+        <Button
+          type="primary"
+          size="large"
+          icon={<UserOutlined />}
+          onClick={handleProfileClick}
+        />
+      </Tooltip>
+      <Tooltip title="Мои чаты">
+        <Button
+          type="primary"
+          size="large"
+          icon={<MessageOutlined />}
+          onClick={handleChatClick}
+        />
+      </Tooltip>
     </div>
   );
 };

@@ -11,7 +11,12 @@ const LoginPage = () => {
     try {
       const res = await axios.post('http://localhost:8000/api/login', values);
 
+      console.log('Полученные данные:', res.data);
+      
+      console.log('Пользователь перед сохранением:', res.data.user);
+      console.log('Пользователь перед сохранением:', JSON.stringify(res.data.user));
       // Сохраняем токен и пользователя
+      localStorage.clear()
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
 
@@ -22,7 +27,7 @@ const LoginPage = () => {
       message.error(msg);
     }
   };
-
+  
   return (
     <div style={{ maxWidth: 400, margin: '50px auto' }}>
       <Title level={2}>Вход</Title>

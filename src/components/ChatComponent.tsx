@@ -46,6 +46,7 @@ const ChatComponent: React.FC = () => {
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [Message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [publication, setPublication] = useState<any>(null);
   const ws = useRef<WebSocket | null>(null);
@@ -83,15 +84,15 @@ const ChatComponent: React.FC = () => {
     ws.current.onerror = (err) => console.error("WebSocket ошибка:", err);
     ws.current.onclose = () => console.log("WebSocket отключен");
 
-    return () => {
-      ws.current?.close();
-    };
+    // return () => {
+    //   ws.current?.close();
+    // };
   }, [userId, navigate, location.state, selectedChat?.id]);
 
   const fetchChats = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("/chats");
+      const response = await axios.get("api/chats");
       setChats(response.data.chats);
       if (response.data.chats.length > 0 && !selectedChat) {
         setSelectedChat(response.data.chats[0]);
@@ -112,7 +113,7 @@ const ChatComponent: React.FC = () => {
   const fetchMessages = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`/chats/${selectedChat?.id}/messages`);
+      const response = await axios.get(`api/chats/${selectedChat?.id}/messages`);
       setMessages(response.data.messages);
     } catch (err) {
       console.error("Ошибка при загрузке сообщений:", err);
@@ -122,7 +123,7 @@ const ChatComponent: React.FC = () => {
   };
 
   const handleSendMessage = () => {
-    if (!newMessage.trim() || !selectedChat?.id || !userId) {
+    if (!Message.trim() || !selectedChat?.id || !userId) {
       message.error("Не выбран чат или сообщение пустое");
       return;
     }
@@ -137,10 +138,10 @@ const ChatComponent: React.FC = () => {
               selectedChat.sender_id === userId
                 ? selectedChat.receiver_id
                 : selectedChat.sender_id,
-            content: newMessage,
+            content: Message,
           })
         );
-        setNewMessage("");
+        setMessage("");
       } else {
         throw new Error("WebSocket не подключен");
       }
@@ -161,7 +162,7 @@ const ChatComponent: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post("/chats", {
+      const response = await axios.post("api/chats", {
         publicationId: publication.id,
         receiverId: publication.user_id,
         firstMessage: newMessage || "Начало чата",
@@ -272,8 +273,8 @@ const ChatComponent: React.FC = () => {
                 <div ref={messagesEndRef} />
               </div>
               <TextArea
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                value={Message}
+                onChange={(e) => setMessage(e.target.value)}
                 placeholder="Введите сообщение..."
                 autoSize={{ minRows: 2, maxRows: 4 }}
                 style={{ width: "100%", marginBottom: "10px" }}

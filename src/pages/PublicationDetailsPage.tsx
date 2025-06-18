@@ -6,7 +6,8 @@ import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
 import ImageGallery from "../components/ImageGallery";
 import { getCurrentUser } from "../utils/auth";
 import { useNavigate } from "react-router-dom";
-
+import { EditOutlined } from "@ant-design/icons";
+import instance from "../api/axios";
 const { Title, Paragraph } = Typography;
 
 const PublicationDetailsPage = () => {
@@ -19,10 +20,9 @@ const PublicationDetailsPage = () => {
   useEffect(() => {
     const fetchPublication = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:8000/api/publications/${id}`,
-          { withCredentials: true }
-        );
+        const res = await instance.get(`api/publications/${id}`, {
+          withCredentials: true,
+        });
 
         const pub = res.data.publication;
 
@@ -46,15 +46,26 @@ const PublicationDetailsPage = () => {
   }, [id]);
 
   const handleChatClick = () => {
-    if (currentUser && publication.user_id !== currentUser.id) {
-      navigate('/chat', { state: { publication } });
+    if (currentUser && publication?.user_id !== currentUser.id) {
+      navigate("/chat", { state: { publication } });
+    }
+  };
+
+  const handleWhatsAppClick = () => {
+    if (publication?.phone) {
+      const phoneNumber = publication.phone.replace(/[\s()-]/g, "");
+      const message = encodeURIComponent(
+        `Здравствуйте! Я по поводу вашей публикации "${publication.title}"`
+      );
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+      window.open(whatsappUrl, "_blank");
+    } else {
+      console.error("Номер телефона не указан");
     }
   };
 
   if (loading)
-    return (
-      <Spin size="large" style={{ display: "block", margin: "100px auto" }} />
-    );
+    return <Spin size="large" style={{ display: "block", margin: "100px auto" }} />;
   if (!publication) return <p>Публикация не найдена</p>;
 
   return (
@@ -70,9 +81,59 @@ const PublicationDetailsPage = () => {
         <strong>Тип:</strong> {publication.type}
       </p>
       <p>
-        <strong>Телефон:</strong> {publication.phone}
+        <strong>Телефон:</strong> {publication.phone || "Не указан"}
       </p>
-      
+
+      {currentUser && publication?.user_id === currentUser.id && (
+        <div style={{ marginTop: 20, marginBottom: 20 }}>
+          <Button
+            type="primary"
+            onClick={() => navigate(`/publication/${id}/edit`)}
+            style={{ marginRight: 10 }}
+            icon={<EditOutlined />}
+          >
+            Редактировать
+          </Button>
+          <Button
+            type="default"
+            onClick={async () => {
+              try {
+                await instance.post(
+                  `api/publications/${id}/close`,
+                  {},
+                  { withCredentials: true }
+                );
+                setPublication({ ...publication, is_resolved: true });
+              } catch (err) {
+                console.error("Ошибка при завершении публикации:", err);
+              }
+            }}
+            disabled={publication.is_resolved}
+          >
+            Завершить
+          </Button>
+        </div>
+      )}
+
+      {currentUser && publication?.user_id !== currentUser.id && (
+        <div style={{ marginTop: 20, marginBottom: 20 }}>
+          <Button
+            type="primary"
+            onClick={handleChatClick}
+            style={{ marginRight: 10 }}
+          >
+            Написать автору
+          </Button>
+          <Button
+            type="default"
+            onClick={handleWhatsAppClick}
+            disabled={!publication.phone}
+          >
+            Чат в WhatsApp
+          </Button>
+        </div>
+      )}
+
       <ImageGallery images={publication.images} />
 
       {publication.location && (
@@ -99,11 +160,6 @@ const PublicationDetailsPage = () => {
             </Map>
           </YMaps>
         </div>
-      )}
-      {currentUser && publication.user_id !== currentUser.id && (
-        <Button type="primary" onClick={handleChatClick} style={{ marginTop: 20 }}>
-          Написать автору
-        </Button>
       )}
     </Card>
   );
